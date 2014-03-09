@@ -1,0 +1,17 @@
+{
+  "name": "signature",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test/**/*.js | colortape"
+  },
+  "author": "Shuhei Kagawa <shuhei.kagawa@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "tape": "~2.10.2",
+    "testling": "~1.6.0",
+    "browserify": "~3.32.0",
+    "colortape": "0.0.1"
+  }
+}
