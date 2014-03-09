@@ -1,4 +1,4 @@
-var signature = require('..');
+var sig = require('..');
 var test = require('tape');
 
 test('foo bar', function (t) {
@@ -16,7 +16,7 @@ test('canonicalRequest', function (t) {
     'Content-type': 'application/x-www-form-urlencoded; charset=utf-8'
   };
   var payload = 'Action=ListUsers&Version=2010-05-08';
-  var req = signature.canonicalRequest(method, url, headers, payload);
+  var req = sig.canonicalRequest(method, url, headers, payload);
   var expected = [
     'POST',
     '/',
@@ -34,14 +34,14 @@ test('canonicalRequest', function (t) {
 
 test('canonicalQueryString empty', function (t) {
   var url = 'http://foo.com/hello';
-  var query = signature.canonicalQueryString(url);
+  var query = sig.canonicalQueryString(url);
   t.equal(query, '');
   t.end();
 });
 
 test('canonicalQueryString present', function (t) {
   var url = 'http://foo.com/hello?foo=bar&abc=123';
-  var query = signature.canonicalQueryString(url);
+  var query = sig.canonicalQueryString(url);
   t.equal(query, 'abc=123&foo=bar');
   t.end();
 });
@@ -52,7 +52,7 @@ test('signedHeaders', function (t) {
     'X-AMZ-Date': '20110909T233600Z',
     'Content-type': 'application/x-www-form-urlencoded; charset=utf-8'
   };
-  var signed = signature.signedHeaders(headers);
+  var signed = sig.signedHeaders(headers);
   var expected = 'content-type;host;x-amz-date';
   t.equal(signed, expected);
   t.end();
