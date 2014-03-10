@@ -4,29 +4,54 @@ var crypto = require('crypto');
 
 // http://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html
 
-function Signator(secret, region, service, termination) {
-  this.secret = secret;
-  this.region = region;
-  this.service = service;
-  this.termination = termination;
+// Public: Sign requests with the given secret key.
+//
+// options       - The configuration Object.
+//   secret      - The secret access key String. One of this and derivedKey is required.
+//   derivedKey  - The derived signing key String. One of this and secret is required.
+//                 If this is set, it should have been created with the same region,
+//                 service and termination as the options.
+//   region      - The region String. Required.
+//   service     - The service String. Required.
+//   termination - The termination String. Required.
+//
+// Returns the instance.
+function Signator(options) {
+  this.secret = options.secret;
+  this.derivedKey = options.derivedKey;
+
+  this.region = options.region;
+  this.service = options.service;
+  this.termination = options.termination;
 }
 
-Signator.prototype.sign = function (algorithm, requestDate, method, url, headers, payload) {
-  var req = this.canonicalRequest(method, url, headers, payload);
-  var hashedReq = this.hexDigest(req);
+// Public: Sign the given request.
+//
+// algorithm   - The algorithm String.
+// requestDate - The request date String in the format of `20110909T233600Z`.
+// req         - The request Object.
+//   method    - The method String.
+//   url       - The URL String.
+//   headers   - The header Object.
+//   body      - The body String.
+//
+// Return the signature String.
+Signator.prototype.signature = function (algorithm, requestDate, req) {
+  var canonicalReq = this.canonicalRequest(req);
+  var hashedReq = this.hexDigest(canonicalReq);
   var toSign = this.stringToSign(algorithm, requestDate, hashedReq);
   var key = this.signingKey(requestDate);
   return this.hmac(key, toSign).toString('hex');
 };
 
-Signator.prototype.canonicalRequest = function (method, uri, headers, payload) {
+Signator.prototype.canonicalRequest = function (req) {
   var parts = [];
-  parts.push(method.toUpperCase());
-  parts.push(this.getPath(uri));
-  parts.push(this.canonicalQueryString(uri));
-  parts.push(this.canonicalHeaders(headers));
-  parts.push(this.signedHeaders(headers));
-  parts.push(this.hexDigest(payload));
+  parts.push(req.method.toUpperCase());
+  parts.push(this.getPath(req.url));
+  parts.push(this.canonicalQueryString(req.url));
+  parts.push(this.canonicalHeaders(req.headers));
+  parts.push(this.signedHeaders(req.headers));
+  parts.push(this.hexDigest(req.body));
   return parts.join("\n");
 }
 

@@ -6,23 +6,30 @@ function createSignator() {
   var region = 'us-east-1';
   var service = 'iam';
   var termination = 'aws4_request';
-  return new Signator(secret, region, service, termination);
+  return new Signator({
+    secret: secret,
+    region: region,
+    service: service,
+    termination:termination
+  });
 }
 
-test('sign', function (t) {
+test('signature', function (t) {
   var sig = createSignator();
   var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = '20110909T233600Z';
-  var method = 'post';
-  var url = 'http://iam.amazonaws.com/';
-  var headers = {
-    'Host': 'iam.amazonaws.com',
-    'X-AMZ-Date': '20110909T233600Z',
-    'Content-type': 'application/x-www-form-urlencoded; charset=utf-8'
+  var req = {
+    method: 'post',
+    url: 'http://iam.amazonaws.com/',
+    headers: {
+      'Host': 'iam.amazonaws.com',
+      'X-AMZ-Date': '20110909T233600Z',
+      'Content-type': 'application/x-www-form-urlencoded; charset=utf-8'
+    },
+    body: 'Action=ListUsers&Version=2010-05-08'
   };
-  var payload = 'Action=ListUsers&Version=2010-05-08';
 
-  var signature = sig.sign(algorithm, requestDate, method, url, headers, payload);
+  var signature = sig.signature(algorithm, requestDate, req);
   var expected = 'ced6826de92d2bdeed8f846f0bf508e8559e98e4b0199114b84c54174deb456c';
   t.equal(signature, expected);
   t.end();
@@ -30,15 +37,18 @@ test('sign', function (t) {
 
 test('canonicalRequest', function (t) {
   var sig = createSignator();
-  var method = 'post';
-  var url = 'http://iam.amazonaws.com/';
-  var headers = {
-    'Host': 'iam.amazonaws.com',
-    'X-AMZ-Date': '20110909T233600Z',
-    'Content-type': 'application/x-www-form-urlencoded; charset=utf-8'
+  var req = {
+    method: 'post',
+    url: 'http://iam.amazonaws.com/',
+    headers: {
+      'Host': 'iam.amazonaws.com',
+      'X-AMZ-Date': '20110909T233600Z',
+      'Content-type': 'application/x-www-form-urlencoded; charset=utf-8'
+    },
+    body: 'Action=ListUsers&Version=2010-05-08'
   };
-  var payload = 'Action=ListUsers&Version=2010-05-08';
-  var req = sig.canonicalRequest(method, url, headers, payload);
+
+  var canonicalReq = sig.canonicalRequest(req);
   var expected = [
     'POST',
     '/',
@@ -50,7 +60,7 @@ test('canonicalRequest', function (t) {
     'content-type;host;x-amz-date',
     'b6359072c78d70ebee1e81adcbab4f01bf2c23245fa365ef83fe8f1f955085e2'
   ].join("\n");
-  t.equal(req, expected);
+  t.equal(canonicalReq, expected);
   t.end();
 });
 
