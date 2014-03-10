@@ -9,6 +9,25 @@ function createSignator() {
   return new Signator(secret, region, service, termination);
 }
 
+test('sign', function (t) {
+  var sig = createSignator();
+  var algorithm = 'AWS4-HMAC-SHA256';
+  var requestDate = '20110909T233600Z';
+  var method = 'post';
+  var url = 'http://iam.amazonaws.com/';
+  var headers = {
+    'Host': 'iam.amazonaws.com',
+    'X-AMZ-Date': '20110909T233600Z',
+    'Content-type': 'application/x-www-form-urlencoded; charset=utf-8'
+  };
+  var payload = 'Action=ListUsers&Version=2010-05-08';
+
+  var signature = sig.sign(algorithm, requestDate, method, url, headers, payload);
+  var expected = 'ced6826de92d2bdeed8f846f0bf508e8559e98e4b0199114b84c54174deb456c';
+  t.equal(signature, expected);
+  t.end();
+});
+
 test('canonicalRequest', function (t) {
   var sig = createSignator();
   var method = 'post';
@@ -48,6 +67,15 @@ test('stringToSign', function (t) {
     '3511de7e95d28ecd39e9513b642aee07e54f4941150d8df8bf94b328ef7e55e2'
   ].join("\n");
   t.equal(toSign, expected);
+  t.end();
+});
+
+test('signingKey', function (t) {
+  var sig = createSignator();
+  var requestDate = '20110909T233600Z';
+  var key = sig.signingKey(requestDate);
+  var expected = new Buffer([152,241,216,137,254,196,244,66,26,220,82,43,171,12,225,248,46,105,41,194,98,237,21,229,169,76,144,239,209,227,176,231]);
+  t.equal(key.toString('hex'), expected.toString('hex'));
   t.end();
 });
 

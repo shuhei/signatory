@@ -11,6 +11,14 @@ function Signator(secret, region, service, termination) {
   this.termination = termination;
 }
 
+Signator.prototype.sign = function (algorithm, requestDate, method, url, headers, payload) {
+  var req = this.canonicalRequest(method, url, headers, payload);
+  var hashedReq = this.hexDigest(req);
+  var toSign = this.stringToSign(algorithm, requestDate, hashedReq);
+  var key = this.signingKey(requestDate);
+  return this.hmac(key, toSign).toString('hex');
+};
+
 Signator.prototype.canonicalRequest = function (method, uri, headers, payload) {
   var parts = [];
   parts.push(method.toUpperCase());
@@ -29,6 +37,14 @@ Signator.prototype.stringToSign = function (algorithm, requestDate, hashedReques
   parts.push(this.credentialScope(requestDate));
   parts.push(hashedRequest);
   return parts.join("\n");
+}
+
+Signator.prototype.signingKey = function (requestDate) {
+  var date = requestDate.split('T')[0];
+  var kDate = this.hmac('AWS4' + this.secret, date);
+  var kRegion = this.hmac(kDate, this.region);
+  var kService = this.hmac(kRegion, this.service);
+  return this.hmac(kService, this.termination);
 }
 
 Signator.prototype.credentialScope = function (requestDate) {
@@ -77,6 +93,12 @@ Signator.prototype.hexDigest = function (str) {
   var shasum = crypto.createHash('sha256');
   shasum.update(str);
   return shasum.digest('hex');
+}
+
+Signator.prototype.hmac = function (key, data) {
+  var hmac = crypto.createHmac('sha256', key);
+  hmac.update(data);
+  return hmac.digest();
 }
 
 module.exports = Signator;
