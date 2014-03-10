@@ -4,32 +4,44 @@ var crypto = require('crypto');
 
 // http://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html
 
-function canonicalRequest(method, uri, headers, payload) {
+function Signator(secret, region, service, termination) {
+  this.secret = secret;
+  this.region = region;
+  this.service = service;
+  this.termination = termination;
+}
+
+Signator.prototype.canonicalRequest = function (method, uri, headers, payload) {
   var parts = [];
   parts.push(method.toUpperCase());
-  parts.push(getPath(uri));
-  parts.push(canonicalQueryString(uri));
-  parts.push(canonicalHeaders(headers));
-  parts.push(signedHeaders(headers));
-  parts.push(hexDigest(payload));
+  parts.push(this.getPath(uri));
+  parts.push(this.canonicalQueryString(uri));
+  parts.push(this.canonicalHeaders(headers));
+  parts.push(this.signedHeaders(headers));
+  parts.push(this.hexDigest(payload));
   return parts.join("\n");
 }
 
-function stringToSign(algorithm, requestDate, scope, hashedRequest) {
+Signator.prototype.stringToSign = function (algorithm, requestDate, hashedRequest) {
   var parts = [];
   parts.push(algorithm);
   parts.push(requestDate);
-  parts.push(scope);
+  parts.push(this.credentialScope(requestDate));
   parts.push(hashedRequest);
   return parts.join("\n");
 }
 
-function getPath(uri) {
+Signator.prototype.credentialScope = function (requestDate) {
+  var date = requestDate.split('T')[0];
+  return [date, this.region, this.service, this.termination].join("/");
+};
+
+Signator.prototype.getPath = function (uri) {
   var parsed = url.parse(uri);
   return parsed.path;
 }
 
-function canonicalQueryString(uri) {
+Signator.prototype.canonicalQueryString = function (uri) {
   var parsed = url.parse(uri);
   if (!parsed.query) {
     return '';
@@ -42,7 +54,7 @@ function canonicalQueryString(uri) {
   return sortedParams.join('&');
 }
 
-function canonicalHeaders(headers) {
+Signator.prototype.canonicalHeaders = function (headers) {
   var keyValues = Object.keys(headers).map(function (key) {
     return [key.toLowerCase(), headers[key]];
   });
@@ -54,22 +66,17 @@ function canonicalHeaders(headers) {
   }).join('');
 }
 
-function signedHeaders(headers) {
+Signator.prototype.signedHeaders = function (headers) {
   return Object.keys(headers)
                .map(function (key) { return key.toLowerCase(); })
                .sort()
                .join(';');
 }
 
-function hexDigest(str) {
+Signator.prototype.hexDigest = function (str) {
   var shasum = crypto.createHash('sha256');
   shasum.update(str);
   return shasum.digest('hex');
 }
 
-module.exports = {
-  canonicalRequest: canonicalRequest,
-  stringToSign: stringToSign,
-  canonicalQueryString: canonicalQueryString,
-  signedHeaders: signedHeaders
-};
+module.exports = Signator;

@@ -1,7 +1,16 @@
-var sig = require('..');
+var Signator = require('..');
 var test = require('tape');
 
+function createSignator() {
+  var secret = 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY';
+  var region = 'us-east-1';
+  var service = 'iam';
+  var termination = 'aws4_request';
+  return new Signator(secret, region, service, termination);
+}
+
 test('canonicalRequest', function (t) {
+  var sig = createSignator();
   var method = 'post';
   var url = 'http://iam.amazonaws.com/';
   var headers = {
@@ -27,11 +36,11 @@ test('canonicalRequest', function (t) {
 });
 
 test('stringToSign', function (t) {
+  var sig = createSignator();
   var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = '20110909T233600Z';
-  var scope = '20110909/us-east-1/iam/aws4_request';
   var hashedRequest = '3511de7e95d28ecd39e9513b642aee07e54f4941150d8df8bf94b328ef7e55e2';
-  var toSign = sig.stringToSign(algorithm, requestDate, scope, hashedRequest);
+  var toSign = sig.stringToSign(algorithm, requestDate, hashedRequest);
   var expected = [
     'AWS4-HMAC-SHA256',
     '20110909T233600Z',
@@ -42,7 +51,15 @@ test('stringToSign', function (t) {
   t.end();
 });
 
+test('credentialScope', function (t) {
+  var sig = createSignator();
+  var scope = sig.credentialScope('20110909T233600Z');
+  t.equal(scope, '20110909/us-east-1/iam/aws4_request');
+  t.end();
+});
+
 test('canonicalQueryString empty', function (t) {
+  var sig = createSignator();
   var url = 'http://foo.com/hello';
   var query = sig.canonicalQueryString(url);
   t.equal(query, '');
@@ -50,6 +67,7 @@ test('canonicalQueryString empty', function (t) {
 });
 
 test('canonicalQueryString present', function (t) {
+  var sig = createSignator();
   var url = 'http://foo.com/hello?foo=bar&abc=123';
   var query = sig.canonicalQueryString(url);
   t.equal(query, 'abc=123&foo=bar');
@@ -57,6 +75,7 @@ test('canonicalQueryString present', function (t) {
 });
 
 test('signedHeaders', function (t) {
+  var sig = createSignator();
   var headers = {
     'Host': 'iam.amazonaws.com',
     'X-AMZ-Date': '20110909T233600Z',
