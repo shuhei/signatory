@@ -1,12 +1,6 @@
 var sig = require('..');
 var test = require('tape');
 
-test('foo bar', function (t) {
-  t.plan(2);
-  t.equal(1 + 1, 2);
-  t.ok(true);
-});
-
 test('canonicalRequest', function (t) {
   var method = 'post';
   var url = 'http://iam.amazonaws.com/';
@@ -29,6 +23,22 @@ test('canonicalRequest', function (t) {
     'b6359072c78d70ebee1e81adcbab4f01bf2c23245fa365ef83fe8f1f955085e2'
   ].join("\n");
   t.equal(req, expected);
+  t.end();
+});
+
+test('stringToSign', function (t) {
+  var algorithm = 'AWS4-HMAC-SHA256';
+  var requestDate = '20110909T233600Z';
+  var scope = '20110909/us-east-1/iam/aws4_request';
+  var hashedRequest = '3511de7e95d28ecd39e9513b642aee07e54f4941150d8df8bf94b328ef7e55e2';
+  var toSign = sig.stringToSign(algorithm, requestDate, scope, hashedRequest);
+  var expected = [
+    'AWS4-HMAC-SHA256',
+    '20110909T233600Z',
+    '20110909/us-east-1/iam/aws4_request',
+    '3511de7e95d28ecd39e9513b642aee07e54f4941150d8df8bf94b328ef7e55e2'
+  ].join("\n");
+  t.equal(toSign, expected);
   t.end();
 });
 

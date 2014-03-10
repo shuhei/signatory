@@ -15,6 +15,15 @@ function canonicalRequest(method, uri, headers, payload) {
   return parts.join("\n");
 }
 
+function stringToSign(algorithm, requestDate, scope, hashedRequest) {
+  var parts = [];
+  parts.push(algorithm);
+  parts.push(requestDate);
+  parts.push(scope);
+  parts.push(hashedRequest);
+  return parts.join("\n");
+}
+
 function getPath(uri) {
   var parsed = url.parse(uri);
   return parsed.path;
@@ -60,6 +69,7 @@ function hexDigest(str) {
 
 module.exports = {
   canonicalRequest: canonicalRequest,
+  stringToSign: stringToSign,
   canonicalQueryString: canonicalQueryString,
   signedHeaders: signedHeaders
 };
