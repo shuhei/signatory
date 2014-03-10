@@ -2,20 +2,42 @@ var Signator = require('..');
 var test = require('tape');
 
 function createSignator() {
-  var secret = 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY';
-  var region = 'us-east-1';
-  var service = 'iam';
-  var termination = 'aws4_request';
   return new Signator({
-    secret: secret,
-    region: region,
-    service: service,
-    termination:termination
+    secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
+    region: 'us-east-1',
+    service: 'iam',
+    termination: 'aws4_request'
   });
 }
 
-test('signature', function (t) {
+test('signature secret', function (t) {
   var sig = createSignator();
+  var algorithm = 'AWS4-HMAC-SHA256';
+  var requestDate = '20110909T233600Z';
+  var req = {
+    method: 'post',
+    url: 'http://iam.amazonaws.com/',
+    headers: {
+      'Host': 'iam.amazonaws.com',
+      'X-AMZ-Date': '20110909T233600Z',
+      'Content-type': 'application/x-www-form-urlencoded; charset=utf-8'
+    },
+    body: 'Action=ListUsers&Version=2010-05-08'
+  };
+
+  var signature = sig.signature(algorithm, requestDate, req);
+  var expected = 'ced6826de92d2bdeed8f846f0bf508e8559e98e4b0199114b84c54174deb456c';
+  t.equal(signature, expected);
+  t.end();
+});
+
+test('signature derivedKey', function (t) {
+  var sig = new Signator({
+    derivedKey: '98f1d889fec4f4421adc522bab0ce1f82e6929c262ed15e5a94c90efd1e3b0e7',
+    region: 'us-east-1',
+    service: 'iam',
+    termination: 'aws4_request'
+  });
   var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = '20110909T233600Z';
   var req = {

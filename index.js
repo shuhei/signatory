@@ -8,7 +8,7 @@ var crypto = require('crypto');
 //
 // options       - The configuration Object.
 //   secret      - The secret access key String. One of this and derivedKey is required.
-//   derivedKey  - The derived signing key String. One of this and secret is required.
+//   derivedKey  - The derived signing key String in hex. One of this and secret is required.
 //                 If this is set, it should have been created with the same region,
 //                 service and termination as the options.
 //   region      - The region String. Required.
@@ -40,7 +40,12 @@ Signator.prototype.signature = function (algorithm, requestDate, req) {
   var canonicalReq = this.canonicalRequest(req);
   var hashedReq = this.hexDigest(canonicalReq);
   var toSign = this.stringToSign(algorithm, requestDate, hashedReq);
-  var key = this.signingKey(requestDate);
+  var key;
+  if (this.derivedKey) {
+    key = new Buffer(this.derivedKey, 'hex');
+  } else {
+    key = this.signingKey(requestDate);
+  }
   return this.hmac(key, toSign).toString('hex');
 };
 
