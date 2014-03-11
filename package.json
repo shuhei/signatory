@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "browserify -s Signator index.js > dist/signator.js",
     "test": "tape test/**/*.js | colortape"
   },
   "author": "Shuhei Kagawa <shuhei.kagawa@gmail.com>",
@@ -11,7 +12,7 @@
   "devDependencies": {
     "tape": "~2.10.2",
     "testling": "~1.6.0",
-    "browserify": "~3.32.0",
+    "browserify": "~3.32.1",
     "colortape": "0.0.1"
   }
 }
