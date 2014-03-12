@@ -11,20 +11,22 @@ var encHex = require('crypto-js/enc-hex');
 
 // Public: Sign requests with the given secret key.
 //
-// options       - The configuration Object.
-//   secret      - The secret access key String. One of this and derivedKey is required.
-//   derivedKey  - The derived signing key String in hex. One of this and secret is required.
-//                 If this is set, it should have been created with the same region,
-//                 service and termination as the options.
-//   algorithm   - The algorithm String.
-//   credential  - The credential String. Required.
-//                 Consists of Access Key ID, Date, Region, Service and termination string
-//                 joined with slashes.
+// options        - The configuration Object.
+//   secret       - The secret access key String. Either this or derivedKey is required.
+//   derivedKey   - The derived signing key String in hex. Either this or secret is required.
+//                  If this is set, it should have been created with the same region,
+//                  service and termination as the options.
+//   secretPrefix - The secret prefix String. Optional.
+//   algorithm    - The algorithm String.
+//   credential   - The credential String. Required.
+//                  Consists of Access Key ID, Date, Region, Service and termination string
+//                  joined with slashes.
 //
 // Returns the instance.
 function Signatory(options) {
   if (options.secret) {
     this.secret = options.secret;
+    this.secretPrefix = options.secretPrefix || '';
   } else if (options.derivedKey) {
     this.derivedKey = options.derivedKey;
   } else {
@@ -121,7 +123,7 @@ Signatory.prototype.stringToSign = function (requestDate, hashedRequest) {
 
 Signatory.prototype.signingKey = function (requestDate) {
   var date = this.isoDate(requestDate);
-  var kDate = this.hmac('AWS4' + this.secret, date);
+  var kDate = this.hmac(this.secretPrefix + this.secret, date);
   var kRegion = this.hmac(kDate, this.region);
   var kService = this.hmac(kRegion, this.service);
   return this.hmac(kService, this.termination);

@@ -5,6 +5,7 @@ var encHex = require('crypto-js/enc-hex');
 function createSignatory() {
   return new Signatory({
     secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
+    secretPrefix: 'AWS4',
     algorithm: 'AWS4-HMAC-SHA256',
     credential: 'AKIDEXAMPLE/20110909/us-east-1/iam/aws4_request'
   });
