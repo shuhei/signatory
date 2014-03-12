@@ -1,6 +1,11 @@
 var url = require('url');
 var qs = require('querystring');
-var crypto = require('crypto');
+
+var sha256 = require('crypto-js/sha256');
+var sha512 = require('crypto-js/sha512');
+var hmacSHA256 = require('crypto-js/hmac-sha256');
+var hmacSHA512 = require('crypto-js/hmac-sha512');
+var encHex = require('crypto-js/enc-hex');
 
 // http://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html
 
@@ -31,8 +36,14 @@ function Signatory(options) {
   }
   this.algorithm = options.algorithm;
   var algoParts = options.algorithm.split('-');
-  this.hasher = algoParts[algoParts.length - 1].toLowerCase();
-  if (['sha256', 'sha512'].indexOf(this.hasher) < 0) {
+  var hasher = algoParts[algoParts.length - 1].toLowerCase();
+  if (hasher === 'sha256') {
+    this.hasher = sha256;
+    this.hmacer = hmacSHA256;
+  } else if (hasher === 'sha512') {
+    this.hasher = sha512;
+    this.hmacer = hmacSHA512;
+  } else {
     throw new Error('Invalid algorithm: ' + options.algorithm);
   }
 
@@ -76,11 +87,12 @@ Signatory.prototype.signature = function (requestDate, req) {
   var toSign = this.stringToSign(requestDate, hashedReq);
   var key;
   if (this.derivedKey) {
-    key = new Buffer(this.derivedKey, 'hex');
+  var encHex = require('crypto-js/enc-hex');
+    key = encHex.parse(this.derivedKey);
   } else {
     key = this.signingKey(requestDate);
   }
-  return this.hmac(key, toSign).toString('hex');
+  return this.hmac(key, toSign).toString(encHex);
 };
 
 Signatory.prototype.canonicalRequest = function (req) {
@@ -161,15 +173,11 @@ Signatory.prototype.signedHeaders = function (headers) {
 };
 
 Signatory.prototype.hexDigest = function (str) {
-  var shasum = crypto.createHash(this.hasher);
-  shasum.update(str);
-  return shasum.digest('hex');
+  return this.hasher(str).toString(encHex);
 };
 
 Signatory.prototype.hmac = function (key, data) {
-  var hmac = crypto.createHmac(this.hasher, key);
-  hmac.update(data);
-  return hmac.digest();
+  return this.hmacer(data, key);
 };
 
 Signatory.prototype.isoDate = function (date) {

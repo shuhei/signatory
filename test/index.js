@@ -1,5 +1,6 @@
 var Signatory = require('..');
 var test = require('tape');
+var encHex = require('crypto-js/enc-hex');
 
 function createSignatory() {
   return new Signatory({
@@ -183,7 +184,7 @@ test('signingKey', function (t) {
   var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var key = sig.signingKey(requestDate);
   var expected = new Buffer([152,241,216,137,254,196,244,66,26,220,82,43,171,12,225,248,46,105,41,194,98,237,21,229,169,76,144,239,209,227,176,231]);
-  t.equal(key.toString('hex'), expected.toString('hex'));
+  t.equal(key.toString(encHex), expected.toString('hex'));
   t.end();
 });
 
