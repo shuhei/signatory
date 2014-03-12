@@ -44,7 +44,7 @@ function Signator(options) {
 // Public: Sign the given request.
 //
 // algorithm   - The algorithm String.
-// requestDate - The request date String in the format of `20110909T233600Z`.
+// requestDate - The request Date.
 // req         - The request Object.
 //   method    - The method String.
 //   url       - The URL String.
@@ -78,24 +78,31 @@ Signator.prototype.canonicalRequest = function (req) {
 
 Signator.prototype.stringToSign = function (algorithm, requestDate, hashedRequest) {
   var parts = [];
+  var iso = this.isoDateTime(requestDate);
+  if (iso.indexOf(this.date) !== 0) {
+    throw new Error('Invalid requestDate: ' + iso + ' for ' + this.date);
+  }
   parts.push(algorithm);
-  parts.push(requestDate);
-  parts.push(this.credentialScope(requestDate));
+  parts.push(iso);
+  parts.push(this.credentialScope());
   parts.push(hashedRequest);
   return parts.join("\n");
 };
 
 Signator.prototype.signingKey = function (requestDate) {
-  var date = requestDate.split('T')[0];
+  var date = this.isoDate(requestDate);
   var kDate = this.hmac('AWS4' + this.secret, date);
   var kRegion = this.hmac(kDate, this.region);
   var kService = this.hmac(kRegion, this.service);
   return this.hmac(kService, this.termination);
 };
 
-Signator.prototype.credentialScope = function (requestDate) {
-  var date = requestDate.split('T')[0];
-  return [date, this.region, this.service, this.termination].join('/');
+Signator.prototype.credential = function () {
+  return [this.accessKeyID, this.credentialScope()].join('/');
+};
+
+Signator.prototype.credentialScope = function () {
+  return [this.date, this.region, this.service, this.termination].join('/');
 };
 
 Signator.prototype.getPath = function (uri) {
@@ -151,12 +158,16 @@ Signator.prototype.isoDate = function (date) {
   var y = date.getFullYear();
   var m = date.getMonth() + 1;
   var d = date.getDate();
+  return [y, this._pad(m), this._pad(d)].join('');
+}
+
+Signator.prototype.isoDateTime = function (date) {
   var hours = date.getHours();
   var minutes = date.getMinutes();
   var seconds = date.getSeconds();
 
   var parts = [
-    y, this._pad(m), this._pad(d), 'T',
+    this.isoDate(date), 'T',
     this._pad(hours), this._pad(minutes), this._pad(seconds), 'Z'
   ];
   return parts.join('');

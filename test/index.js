@@ -39,7 +39,7 @@ test('constructor with inbalid credential', function (t) {
 test('signature secret', function (t) {
   var sig = createSignator();
   var algorithm = 'AWS4-HMAC-SHA256';
-  var requestDate = '20110909T233600Z';
+  var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var req = {
     method: 'post',
     url: 'http://iam.amazonaws.com/',
@@ -63,7 +63,7 @@ test('signature derivedKey', function (t) {
     credential: 'ACCESS_KEY_ID/20110909/us-east-1/iam/aws4_request'
   });
   var algorithm = 'AWS4-HMAC-SHA256';
-  var requestDate = '20110909T233600Z';
+  var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var req = {
     method: 'post',
     url: 'http://iam.amazonaws.com/',
@@ -125,10 +125,10 @@ test('canonicalRequest without body', function (t) {
   t.end();
 });
 
-test('stringToSign', function (t) {
+test('stringToSign with valid request date', function (t) {
   var sig = createSignator();
   var algorithm = 'AWS4-HMAC-SHA256';
-  var requestDate = '20110909T233600Z';
+  var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var hashedRequest = '3511de7e95d28ecd39e9513b642aee07e54f4941150d8df8bf94b328ef7e55e2';
   var toSign = sig.stringToSign(algorithm, requestDate, hashedRequest);
   var expected = [
@@ -141,18 +141,36 @@ test('stringToSign', function (t) {
   t.end();
 });
 
+test('stringToSign with invalid request date', function (t) {
+  var sig = createSignator();
+  var algorithm = 'AWS4-HMAC-SHA256';
+  var requestDate = new Date(2013, 9 - 1, 9, 23, 36, 0);
+  var hashedRequest = '3511de7e95d28ecd39e9513b642aee07e54f4941150d8df8bf94b328ef7e55e2';
+  t.plan(1);
+  t.throws(function () {
+    sig.stringToSign(algorithm, requestDate, hashedRequest);
+  });
+});
+
 test('signingKey', function (t) {
   var sig = createSignator();
-  var requestDate = '20110909T233600Z';
+  var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var key = sig.signingKey(requestDate);
   var expected = new Buffer([152,241,216,137,254,196,244,66,26,220,82,43,171,12,225,248,46,105,41,194,98,237,21,229,169,76,144,239,209,227,176,231]);
   t.equal(key.toString('hex'), expected.toString('hex'));
   t.end();
 });
 
+test('credential', function (t) {
+  var sig = createSignator();
+  var credential = sig.credential();
+  t.equal(credential, 'ACCESS_KEY_ID/20110909/us-east-1/iam/aws4_request');
+  t.end();
+});
+
 test('credentialScope', function (t) {
   var sig = createSignator();
-  var scope = sig.credentialScope('20110909T233600Z');
+  var scope = sig.credentialScope();
   t.equal(scope, '20110909/us-east-1/iam/aws4_request');
   t.end();
 });
@@ -190,5 +208,12 @@ test('isoDate', function (t) {
   var sig = createSignator();
   var date = new Date(2014, 3 - 1, 13, 12, 5, 6);
   t.plan(1);
-  t.equal(sig.isoDate(date), '20140313T120506Z');
+  t.equal(sig.isoDate(date), '20140313');
+});
+
+test('isoDateTime', function (t) {
+  var sig = createSignator();
+  var date = new Date(2014, 3 - 1, 13, 12, 5, 6);
+  t.plan(1);
+  t.equal(sig.isoDateTime(date), '20140313T120506Z');
 });
