@@ -4,6 +4,7 @@ var test = require('tape');
 function createSignatory() {
   return new Signatory({
     secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
+    algorithm: 'AWS4-HMAC-SHA256',
     credential: 'AKIDEXAMPLE/20110909/us-east-1/iam/aws4_request'
   });
 }
@@ -12,6 +13,7 @@ test('constructor without secret or derived key', function (t) {
   t.plan(1);
   t.throws(function () {
     new Signatory({
+      algorithm: 'AWS4-HMAC-SHA256',
       credential: 'ACCESS_KEY_ID/20110909/us-east-1/iam/aws4_request'
     });
   });
@@ -21,16 +23,18 @@ test('constructor without credential', function (t) {
   t.plan(1);
   t.throws(function () {
     new Signatory({
-      secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY'
+      secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
+      algorithm: 'AWS4-HMAC-SHA256'
     });
   });
 });
 
-test('constructor with inbalid credential', function (t) {
+test('constructor with invalid credential', function (t) {
   t.plan(1);
   t.throws(function () {
     new Signatory({
       secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
+      algorithm: 'AWS4-HMAC-SHA256',
       credential: 'Invalid Credential!!!'
     });
   });
@@ -38,7 +42,6 @@ test('constructor with inbalid credential', function (t) {
 
 test('authorization', function (t) {
   var sig = createSignatory();
-  var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var req = {
     method: 'post',
@@ -51,7 +54,7 @@ test('authorization', function (t) {
     body: 'Action=ListUsers&Version=2010-05-08'
   };
 
-  var authorization = sig.authorization(algorithm, requestDate, req);
+  var authorization = sig.authorization(requestDate, req);
   var expected = [
     'AWS4-HMAC-SHA256',
     'Credential=AKIDEXAMPLE/20110909/us-east-1/iam/aws4_request,',
@@ -64,7 +67,6 @@ test('authorization', function (t) {
 
 test('signature secret', function (t) {
   var sig = createSignatory();
-  var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var req = {
     method: 'post',
@@ -77,7 +79,7 @@ test('signature secret', function (t) {
     body: 'Action=ListUsers&Version=2010-05-08'
   };
 
-  var signature = sig.signature(algorithm, requestDate, req);
+  var signature = sig.signature(requestDate, req);
   var expected = 'ced6826de92d2bdeed8f846f0bf508e8559e98e4b0199114b84c54174deb456c';
   t.equal(signature, expected);
   t.end();
@@ -86,9 +88,9 @@ test('signature secret', function (t) {
 test('signature derivedKey', function (t) {
   var sig = new Signatory({
     derivedKey: '98f1d889fec4f4421adc522bab0ce1f82e6929c262ed15e5a94c90efd1e3b0e7',
+    algorithm: 'AWS4-HMAC-SHA256',
     credential: 'ACCESS_KEY_ID/20110909/us-east-1/iam/aws4_request'
   });
-  var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var req = {
     method: 'post',
@@ -101,7 +103,7 @@ test('signature derivedKey', function (t) {
     body: 'Action=ListUsers&Version=2010-05-08'
   };
 
-  var signature = sig.signature(algorithm, requestDate, req);
+  var signature = sig.signature(requestDate, req);
   var expected = 'ced6826de92d2bdeed8f846f0bf508e8559e98e4b0199114b84c54174deb456c';
   t.equal(signature, expected);
   t.end();
@@ -153,10 +155,9 @@ test('canonicalRequest without body', function (t) {
 
 test('stringToSign with valid request date', function (t) {
   var sig = createSignatory();
-  var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var hashedRequest = '3511de7e95d28ecd39e9513b642aee07e54f4941150d8df8bf94b328ef7e55e2';
-  var toSign = sig.stringToSign(algorithm, requestDate, hashedRequest);
+  var toSign = sig.stringToSign(requestDate, hashedRequest);
   var expected = [
     'AWS4-HMAC-SHA256',
     '20110909T233600Z',
@@ -169,12 +170,11 @@ test('stringToSign with valid request date', function (t) {
 
 test('stringToSign with invalid request date', function (t) {
   var sig = createSignatory();
-  var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = new Date(2013, 9 - 1, 9, 23, 36, 0);
   var hashedRequest = '3511de7e95d28ecd39e9513b642aee07e54f4941150d8df8bf94b328ef7e55e2';
   t.plan(1);
   t.throws(function () {
-    sig.stringToSign(algorithm, requestDate, hashedRequest);
+    sig.stringToSign(requestDate, hashedRequest);
   });
 });
 

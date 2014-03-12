@@ -11,6 +11,7 @@ var crypto = require('crypto');
 //   derivedKey  - The derived signing key String in hex. One of this and secret is required.
 //                 If this is set, it should have been created with the same region,
 //                 service and termination as the options.
+//   algorithm   - The algorithm String.
 //   credential  - The credential String. Required.
 //                 Consists of Access Key ID, Date, Region, Service and termination string
 //                 joined with slashes.
@@ -25,10 +26,16 @@ function Signatory(options) {
     throw new Error('Either secret or derivedKey is required.');
   }
 
+  if (!options.algorithm) {
+    throw new Error('algorithm is required.');
+  }
+  var algoParts = options.algorithm.split('-');
+  this.hasher = algoParts[algoParts.length - 1].toLowerCase();
+  this.algorithm = options.algorithm;
+
   if (!options.credential) {
     throw new Error('credential is required.');
   }
-
   var parts = options.credential.split('/');
   if (parts.length !== 5) {
     throw new Error('Invalid credential');
@@ -43,7 +50,6 @@ function Signatory(options) {
 
 // Public: Creates the Authorization header.
 //
-// algorithm   - The algorithm String.
 // requestDate - The request Date.
 // req         - The request Object.
 //   method    - The method String.
@@ -52,19 +58,19 @@ function Signatory(options) {
 //   body      - The body String.
 //
 // Returns the Authorization header String.
-Signatory.prototype.authorization = function (algorithm, requestDate, req) {
+Signatory.prototype.authorization = function (requestDate, req) {
   var params = [
     'Credential=' + this.credential(),
     'SignedHeaders=' + this.signedHeaders(req.headers),
-    'Signature=' + this.signature(algorithm, requestDate, req)
+    'Signature=' + this.signature(requestDate, req)
   ].join(', ');
-  return [algorithm, params].join(' ');
+  return [this.algorithm, params].join(' ');
 };
 
-Signatory.prototype.signature = function (algorithm, requestDate, req) {
+Signatory.prototype.signature = function (requestDate, req) {
   var canonicalReq = this.canonicalRequest(req);
   var hashedReq = this.hexDigest(canonicalReq);
-  var toSign = this.stringToSign(algorithm, requestDate, hashedReq);
+  var toSign = this.stringToSign(requestDate, hashedReq);
   var key;
   if (this.derivedKey) {
     key = new Buffer(this.derivedKey, 'hex');
@@ -85,13 +91,13 @@ Signatory.prototype.canonicalRequest = function (req) {
   return parts.join("\n");
 };
 
-Signatory.prototype.stringToSign = function (algorithm, requestDate, hashedRequest) {
+Signatory.prototype.stringToSign = function (requestDate, hashedRequest) {
   var parts = [];
   var iso = this.isoDateTime(requestDate);
   if (iso.indexOf(this.date) !== 0) {
     throw new Error('Invalid requestDate: ' + iso + ' for ' + this.date);
   }
-  parts.push(algorithm);
+  parts.push(this.algorithm);
   parts.push(iso);
   parts.push(this.credentialScope());
   parts.push(hashedRequest);
@@ -152,13 +158,13 @@ Signatory.prototype.signedHeaders = function (headers) {
 };
 
 Signatory.prototype.hexDigest = function (str) {
-  var shasum = crypto.createHash('sha256');
+  var shasum = crypto.createHash(this.hasher);
   shasum.update(str);
   return shasum.digest('hex');
 };
 
 Signatory.prototype.hmac = function (key, data) {
-  var hmac = crypto.createHmac('sha256', key);
+  var hmac = crypto.createHmac(this.hasher, key);
   hmac.update(data);
   return hmac.digest();
 };
