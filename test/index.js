@@ -57,7 +57,7 @@ test('signature derivedKey', function (t) {
   t.end();
 });
 
-test('canonicalRequest', function (t) {
+test('canonicalRequest with body', function (t) {
   var sig = createSignator();
   var req = {
     method: 'post',
@@ -83,6 +83,21 @@ test('canonicalRequest', function (t) {
     'b6359072c78d70ebee1e81adcbab4f01bf2c23245fa365ef83fe8f1f955085e2'
   ].join("\n");
   t.equal(canonicalReq, expected);
+  t.end();
+});
+
+test('canonicalRequest without body', function (t) {
+  var sig = createSignator();
+  var req = {
+    method: 'get',
+    url: 'http://iam.amazonaws.com/',
+    headers: {
+      'Host': 'iam.amazonaws.com',
+      'X-AMZ-Date': '20110909T233600Z'
+    }
+  };
+
+  t.doesNotThrow(sig.canonicalRequest.bind(sig, req));
   t.end();
 });
 
@@ -152,4 +167,4 @@ test('isoDate', function (t) {
   var date = new Date(2014, 3 - 1, 13, 12, 5, 6);
   t.plan(1);
   t.equal(sig.isoDate(date), '20140313T120506Z');
-})
+});

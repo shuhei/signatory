@@ -56,7 +56,7 @@ Signator.prototype.canonicalRequest = function (req) {
   parts.push(this.canonicalQueryString(req.url));
   parts.push(this.canonicalHeaders(req.headers));
   parts.push(this.signedHeaders(req.headers));
-  parts.push(this.hexDigest(req.body));
+  parts.push(this.hexDigest(req.body || ''));
   return parts.join("\n");
 };
 
