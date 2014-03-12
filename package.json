@@ -13,6 +13,6 @@
     "tape": "~2.10.2",
     "testling": "~1.6.0",
     "browserify": "~3.32.1",
-    "colortape": "0.0.1"
+    "colortape": "0.0.4"
   }
 }
