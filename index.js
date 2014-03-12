@@ -11,18 +11,34 @@ var crypto = require('crypto');
 //   derivedKey  - The derived signing key String in hex. One of this and secret is required.
 //                 If this is set, it should have been created with the same region,
 //                 service and termination as the options.
-//   region      - The region String. Required.
-//   service     - The service String. Required.
-//   termination - The termination String. Required.
+//   credential  - The credential String. Required.
+//                 Consists of Access Key ID, Date, Region, Service and termination string
+//                 joined with slashes.
 //
 // Returns the instance.
 function Signator(options) {
-  this.secret = options.secret;
-  this.derivedKey = options.derivedKey;
+  if (options.secret) {
+    this.secret = options.secret;
+  } else if (options.derivedKey) {
+    this.derivedKey = options.derivedKey;
+  } else {
+    throw new Error('Either secret or derivedKey is required.');
+  }
 
-  this.region = options.region;
-  this.service = options.service;
-  this.termination = options.termination;
+  if (!options.credential) {
+    throw new Error('credential is required.');
+  }
+
+  var parts = options.credential.split('/');
+  if (parts.length !== 5) {
+    throw new Error('Invalid credential');
+  }
+
+  this.accessKeyID = parts[0];
+  this.date = parts[1];
+  this.region = parts[2];
+  this.service = parts[3];
+  this.termination = parts[4];
 };
 
 // Public: Sign the given request.
@@ -79,7 +95,7 @@ Signator.prototype.signingKey = function (requestDate) {
 
 Signator.prototype.credentialScope = function (requestDate) {
   var date = requestDate.split('T')[0];
-  return [date, this.region, this.service, this.termination].join("/");
+  return [date, this.region, this.service, this.termination].join('/');
 };
 
 Signator.prototype.getPath = function (uri) {

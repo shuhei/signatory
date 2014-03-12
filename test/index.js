@@ -4,11 +4,37 @@ var test = require('tape');
 function createSignator() {
   return new Signator({
     secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
-    region: 'us-east-1',
-    service: 'iam',
-    termination: 'aws4_request'
+    credential: 'ACCESS_KEY_ID/20110909/us-east-1/iam/aws4_request'
   });
 }
+
+test('constructor without secret or derived key', function (t) {
+  t.plan(1);
+  t.throws(function () {
+    new Signator({
+      credential: 'ACCESS_KEY_ID/20110909/us-east-1/iam/aws4_request'
+    });
+  });
+});
+
+test('constructor without credential', function (t) {
+  t.plan(1);
+  t.throws(function () {
+    new Signator({
+      secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY'
+    });
+  });
+});
+
+test('constructor with inbalid credential', function (t) {
+  t.plan(1);
+  t.throws(function () {
+    new Signator({
+      secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
+      credential: 'Invalid Credential!!!'
+    });
+  });
+});
 
 test('signature secret', function (t) {
   var sig = createSignator();
@@ -34,9 +60,7 @@ test('signature secret', function (t) {
 test('signature derivedKey', function (t) {
   var sig = new Signator({
     derivedKey: '98f1d889fec4f4421adc522bab0ce1f82e6929c262ed15e5a94c90efd1e3b0e7',
-    region: 'us-east-1',
-    service: 'iam',
-    termination: 'aws4_request'
+    credential: 'ACCESS_KEY_ID/20110909/us-east-1/iam/aws4_request'
   });
   var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = '20110909T233600Z';
