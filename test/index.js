@@ -4,7 +4,7 @@ var test = require('tape');
 function createSignator() {
   return new Signator({
     secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
-    credential: 'ACCESS_KEY_ID/20110909/us-east-1/iam/aws4_request'
+    credential: 'AKIDEXAMPLE/20110909/us-east-1/iam/aws4_request'
   });
 }
 
@@ -34,6 +34,32 @@ test('constructor with inbalid credential', function (t) {
       credential: 'Invalid Credential!!!'
     });
   });
+});
+
+test('authorization', function (t) {
+  var sig = createSignator();
+  var algorithm = 'AWS4-HMAC-SHA256';
+  var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
+  var req = {
+    method: 'post',
+    url: 'http://iam.amazonaws.com/',
+    headers: {
+      'Host': 'iam.amazonaws.com',
+      'X-AMZ-Date': '20110909T233600Z',
+      'Content-type': 'application/x-www-form-urlencoded; charset=utf-8'
+    },
+    body: 'Action=ListUsers&Version=2010-05-08'
+  };
+
+  var authorization = sig.authorization(algorithm, requestDate, req);
+  var expected = [
+    'AWS4-HMAC-SHA256',
+    'Credential=AKIDEXAMPLE/20110909/us-east-1/iam/aws4_request,',
+    'SignedHeaders=content-type;host;x-amz-date,',
+    'Signature=ced6826de92d2bdeed8f846f0bf508e8559e98e4b0199114b84c54174deb456c'
+  ].join(' ');
+  t.equal(authorization, expected);
+  t.end();
 });
 
 test('signature secret', function (t) {
@@ -164,7 +190,7 @@ test('signingKey', function (t) {
 test('credential', function (t) {
   var sig = createSignator();
   var credential = sig.credential();
-  t.equal(credential, 'ACCESS_KEY_ID/20110909/us-east-1/iam/aws4_request');
+  t.equal(credential, 'AKIDEXAMPLE/20110909/us-east-1/iam/aws4_request');
   t.end();
 });
 

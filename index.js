@@ -41,7 +41,7 @@ function Signator(options) {
   this.termination = parts[4];
 };
 
-// Public: Sign the given request.
+// Public: Creates the Authorization header.
 //
 // algorithm   - The algorithm String.
 // requestDate - The request Date.
@@ -51,7 +51,16 @@ function Signator(options) {
 //   headers   - The header Object.
 //   body      - The body String.
 //
-// Return the signature String.
+// Returns the Authorization header String.
+Signator.prototype.authorization = function (algorithm, requestDate, req) {
+  var params = [
+    'Credential=' + this.credential(),
+    'SignedHeaders=' + this.signedHeaders(req.headers),
+    'Signature=' + this.signature(algorithm, requestDate, req)
+  ].join(', ');
+  return [algorithm, params].join(' ');
+};
+
 Signator.prototype.signature = function (algorithm, requestDate, req) {
   var canonicalReq = this.canonicalRequest(req);
   var hashedReq = this.hexDigest(canonicalReq);
