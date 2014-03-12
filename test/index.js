@@ -146,3 +146,10 @@ test('signedHeaders', function (t) {
   t.equal(signed, expected);
   t.end();
 });
+
+test('isoDate', function (t) {
+  var sig = createSignator();
+  var date = new Date(2014, 3 - 1, 13, 12, 5, 6);
+  t.plan(1);
+  t.equal(sig.isoDate(date), '20140313T120506Z');
+})

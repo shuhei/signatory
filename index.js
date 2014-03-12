@@ -23,7 +23,7 @@ function Signator(options) {
   this.region = options.region;
   this.service = options.service;
   this.termination = options.termination;
-}
+};
 
 // Public: Sign the given request.
 //
@@ -58,7 +58,7 @@ Signator.prototype.canonicalRequest = function (req) {
   parts.push(this.signedHeaders(req.headers));
   parts.push(this.hexDigest(req.body));
   return parts.join("\n");
-}
+};
 
 Signator.prototype.stringToSign = function (algorithm, requestDate, hashedRequest) {
   var parts = [];
@@ -67,7 +67,7 @@ Signator.prototype.stringToSign = function (algorithm, requestDate, hashedReques
   parts.push(this.credentialScope(requestDate));
   parts.push(hashedRequest);
   return parts.join("\n");
-}
+};
 
 Signator.prototype.signingKey = function (requestDate) {
   var date = requestDate.split('T')[0];
@@ -75,7 +75,7 @@ Signator.prototype.signingKey = function (requestDate) {
   var kRegion = this.hmac(kDate, this.region);
   var kService = this.hmac(kRegion, this.service);
   return this.hmac(kService, this.termination);
-}
+};
 
 Signator.prototype.credentialScope = function (requestDate) {
   var date = requestDate.split('T')[0];
@@ -85,7 +85,7 @@ Signator.prototype.credentialScope = function (requestDate) {
 Signator.prototype.getPath = function (uri) {
   var parsed = url.parse(uri);
   return parsed.path;
-}
+};
 
 Signator.prototype.canonicalQueryString = function (uri) {
   var parsed = url.parse(uri);
@@ -98,7 +98,7 @@ Signator.prototype.canonicalQueryString = function (uri) {
     return key + '=' + params[key];
   });
   return sortedParams.join('&');
-}
+};
 
 Signator.prototype.canonicalHeaders = function (headers) {
   var keyValues = Object.keys(headers).map(function (key) {
@@ -110,25 +110,48 @@ Signator.prototype.canonicalHeaders = function (headers) {
   return keyValues.map(function (item) {
     return item[0] + ':' + item[1] + "\n";
   }).join('');
-}
+};
 
 Signator.prototype.signedHeaders = function (headers) {
   return Object.keys(headers)
                .map(function (key) { return key.toLowerCase(); })
                .sort()
                .join(';');
-}
+};
 
 Signator.prototype.hexDigest = function (str) {
   var shasum = crypto.createHash('sha256');
   shasum.update(str);
   return shasum.digest('hex');
-}
+};
 
 Signator.prototype.hmac = function (key, data) {
   var hmac = crypto.createHmac('sha256', key);
   hmac.update(data);
   return hmac.digest();
-}
+};
+
+Signator.prototype.isoDate = function (date) {
+  var y = date.getFullYear();
+  var m = date.getMonth() + 1;
+  var d = date.getDate();
+  var hours = date.getHours();
+  var minutes = date.getMinutes();
+  var seconds = date.getSeconds();
+
+  var parts = [
+    y, this._pad(m), this._pad(d), 'T',
+    this._pad(hours), this._pad(minutes), this._pad(seconds), 'Z'
+  ];
+  return parts.join('');
+};
+
+Signator.prototype._pad = function (num) {
+  var str = num.toString();
+  if (str.length < 2) {
+    str = '0' + str;
+  }
+  return str;
+};
 
 module.exports = Signator;
