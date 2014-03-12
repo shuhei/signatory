@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "browserify -s Signator index.js > dist/signator.js",
+    "build": "browserify -s Signatory index.js > dist/signatory.js",
     "test": "tape test/**/*.js | colortape"
   },
   "author": "Shuhei Kagawa <shuhei.kagawa@gmail.com>",

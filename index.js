@@ -16,7 +16,7 @@ var crypto = require('crypto');
 //                 joined with slashes.
 //
 // Returns the instance.
-function Signator(options) {
+function Signatory(options) {
   if (options.secret) {
     this.secret = options.secret;
   } else if (options.derivedKey) {
@@ -52,7 +52,7 @@ function Signator(options) {
 //   body      - The body String.
 //
 // Returns the Authorization header String.
-Signator.prototype.authorization = function (algorithm, requestDate, req) {
+Signatory.prototype.authorization = function (algorithm, requestDate, req) {
   var params = [
     'Credential=' + this.credential(),
     'SignedHeaders=' + this.signedHeaders(req.headers),
@@ -61,7 +61,7 @@ Signator.prototype.authorization = function (algorithm, requestDate, req) {
   return [algorithm, params].join(' ');
 };
 
-Signator.prototype.signature = function (algorithm, requestDate, req) {
+Signatory.prototype.signature = function (algorithm, requestDate, req) {
   var canonicalReq = this.canonicalRequest(req);
   var hashedReq = this.hexDigest(canonicalReq);
   var toSign = this.stringToSign(algorithm, requestDate, hashedReq);
@@ -74,7 +74,7 @@ Signator.prototype.signature = function (algorithm, requestDate, req) {
   return this.hmac(key, toSign).toString('hex');
 };
 
-Signator.prototype.canonicalRequest = function (req) {
+Signatory.prototype.canonicalRequest = function (req) {
   var parts = [];
   parts.push(req.method.toUpperCase());
   parts.push(this.getPath(req.url));
@@ -85,7 +85,7 @@ Signator.prototype.canonicalRequest = function (req) {
   return parts.join("\n");
 };
 
-Signator.prototype.stringToSign = function (algorithm, requestDate, hashedRequest) {
+Signatory.prototype.stringToSign = function (algorithm, requestDate, hashedRequest) {
   var parts = [];
   var iso = this.isoDateTime(requestDate);
   if (iso.indexOf(this.date) !== 0) {
@@ -98,7 +98,7 @@ Signator.prototype.stringToSign = function (algorithm, requestDate, hashedReques
   return parts.join("\n");
 };
 
-Signator.prototype.signingKey = function (requestDate) {
+Signatory.prototype.signingKey = function (requestDate) {
   var date = this.isoDate(requestDate);
   var kDate = this.hmac('AWS4' + this.secret, date);
   var kRegion = this.hmac(kDate, this.region);
@@ -106,20 +106,20 @@ Signator.prototype.signingKey = function (requestDate) {
   return this.hmac(kService, this.termination);
 };
 
-Signator.prototype.credential = function () {
+Signatory.prototype.credential = function () {
   return [this.accessKeyID, this.credentialScope()].join('/');
 };
 
-Signator.prototype.credentialScope = function () {
+Signatory.prototype.credentialScope = function () {
   return [this.date, this.region, this.service, this.termination].join('/');
 };
 
-Signator.prototype.getPath = function (uri) {
+Signatory.prototype.getPath = function (uri) {
   var parsed = url.parse(uri);
   return parsed.path;
 };
 
-Signator.prototype.canonicalQueryString = function (uri) {
+Signatory.prototype.canonicalQueryString = function (uri) {
   var parsed = url.parse(uri);
   if (!parsed.query) {
     return '';
@@ -132,7 +132,7 @@ Signator.prototype.canonicalQueryString = function (uri) {
   return sortedParams.join('&');
 };
 
-Signator.prototype.canonicalHeaders = function (headers) {
+Signatory.prototype.canonicalHeaders = function (headers) {
   var keyValues = Object.keys(headers).map(function (key) {
     return [key.toLowerCase(), headers[key]];
   });
@@ -144,33 +144,33 @@ Signator.prototype.canonicalHeaders = function (headers) {
   }).join('');
 };
 
-Signator.prototype.signedHeaders = function (headers) {
+Signatory.prototype.signedHeaders = function (headers) {
   return Object.keys(headers)
                .map(function (key) { return key.toLowerCase(); })
                .sort()
                .join(';');
 };
 
-Signator.prototype.hexDigest = function (str) {
+Signatory.prototype.hexDigest = function (str) {
   var shasum = crypto.createHash('sha256');
   shasum.update(str);
   return shasum.digest('hex');
 };
 
-Signator.prototype.hmac = function (key, data) {
+Signatory.prototype.hmac = function (key, data) {
   var hmac = crypto.createHmac('sha256', key);
   hmac.update(data);
   return hmac.digest();
 };
 
-Signator.prototype.isoDate = function (date) {
+Signatory.prototype.isoDate = function (date) {
   var y = date.getFullYear();
   var m = date.getMonth() + 1;
   var d = date.getDate();
   return [y, this._pad(m), this._pad(d)].join('');
 }
 
-Signator.prototype.isoDateTime = function (date) {
+Signatory.prototype.isoDateTime = function (date) {
   var hours = date.getHours();
   var minutes = date.getMinutes();
   var seconds = date.getSeconds();
@@ -182,7 +182,7 @@ Signator.prototype.isoDateTime = function (date) {
   return parts.join('');
 };
 
-Signator.prototype._pad = function (num) {
+Signatory.prototype._pad = function (num) {
   var str = num.toString();
   if (str.length < 2) {
     str = '0' + str;
@@ -190,4 +190,4 @@ Signator.prototype._pad = function (num) {
   return str;
 };
 
-module.exports = Signator;
+module.exports = Signatory;

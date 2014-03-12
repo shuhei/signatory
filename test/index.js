@@ -1,8 +1,8 @@
-var Signator = require('..');
+var Signatory = require('..');
 var test = require('tape');
 
-function createSignator() {
-  return new Signator({
+function createSignatory() {
+  return new Signatory({
     secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
     credential: 'AKIDEXAMPLE/20110909/us-east-1/iam/aws4_request'
   });
@@ -11,7 +11,7 @@ function createSignator() {
 test('constructor without secret or derived key', function (t) {
   t.plan(1);
   t.throws(function () {
-    new Signator({
+    new Signatory({
       credential: 'ACCESS_KEY_ID/20110909/us-east-1/iam/aws4_request'
     });
   });
@@ -20,7 +20,7 @@ test('constructor without secret or derived key', function (t) {
 test('constructor without credential', function (t) {
   t.plan(1);
   t.throws(function () {
-    new Signator({
+    new Signatory({
       secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY'
     });
   });
@@ -29,7 +29,7 @@ test('constructor without credential', function (t) {
 test('constructor with inbalid credential', function (t) {
   t.plan(1);
   t.throws(function () {
-    new Signator({
+    new Signatory({
       secret: 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
       credential: 'Invalid Credential!!!'
     });
@@ -37,7 +37,7 @@ test('constructor with inbalid credential', function (t) {
 });
 
 test('authorization', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var req = {
@@ -63,7 +63,7 @@ test('authorization', function (t) {
 });
 
 test('signature secret', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var req = {
@@ -84,7 +84,7 @@ test('signature secret', function (t) {
 });
 
 test('signature derivedKey', function (t) {
-  var sig = new Signator({
+  var sig = new Signatory({
     derivedKey: '98f1d889fec4f4421adc522bab0ce1f82e6929c262ed15e5a94c90efd1e3b0e7',
     credential: 'ACCESS_KEY_ID/20110909/us-east-1/iam/aws4_request'
   });
@@ -108,7 +108,7 @@ test('signature derivedKey', function (t) {
 });
 
 test('canonicalRequest with body', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var req = {
     method: 'post',
     url: 'http://iam.amazonaws.com/',
@@ -137,7 +137,7 @@ test('canonicalRequest with body', function (t) {
 });
 
 test('canonicalRequest without body', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var req = {
     method: 'get',
     url: 'http://iam.amazonaws.com/',
@@ -152,7 +152,7 @@ test('canonicalRequest without body', function (t) {
 });
 
 test('stringToSign with valid request date', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var hashedRequest = '3511de7e95d28ecd39e9513b642aee07e54f4941150d8df8bf94b328ef7e55e2';
@@ -168,7 +168,7 @@ test('stringToSign with valid request date', function (t) {
 });
 
 test('stringToSign with invalid request date', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var algorithm = 'AWS4-HMAC-SHA256';
   var requestDate = new Date(2013, 9 - 1, 9, 23, 36, 0);
   var hashedRequest = '3511de7e95d28ecd39e9513b642aee07e54f4941150d8df8bf94b328ef7e55e2';
@@ -179,7 +179,7 @@ test('stringToSign with invalid request date', function (t) {
 });
 
 test('signingKey', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var requestDate = new Date(2011, 9 - 1, 9, 23, 36, 0);
   var key = sig.signingKey(requestDate);
   var expected = new Buffer([152,241,216,137,254,196,244,66,26,220,82,43,171,12,225,248,46,105,41,194,98,237,21,229,169,76,144,239,209,227,176,231]);
@@ -188,21 +188,21 @@ test('signingKey', function (t) {
 });
 
 test('credential', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var credential = sig.credential();
   t.equal(credential, 'AKIDEXAMPLE/20110909/us-east-1/iam/aws4_request');
   t.end();
 });
 
 test('credentialScope', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var scope = sig.credentialScope();
   t.equal(scope, '20110909/us-east-1/iam/aws4_request');
   t.end();
 });
 
 test('canonicalQueryString empty', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var url = 'http://foo.com/hello';
   var query = sig.canonicalQueryString(url);
   t.equal(query, '');
@@ -210,7 +210,7 @@ test('canonicalQueryString empty', function (t) {
 });
 
 test('canonicalQueryString present', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var url = 'http://foo.com/hello?foo=bar&abc=123';
   var query = sig.canonicalQueryString(url);
   t.equal(query, 'abc=123&foo=bar');
@@ -218,7 +218,7 @@ test('canonicalQueryString present', function (t) {
 });
 
 test('signedHeaders', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var headers = {
     'Host': 'iam.amazonaws.com',
     'X-AMZ-Date': '20110909T233600Z',
@@ -231,14 +231,14 @@ test('signedHeaders', function (t) {
 });
 
 test('isoDate', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var date = new Date(2014, 3 - 1, 13, 12, 5, 6);
   t.plan(1);
   t.equal(sig.isoDate(date), '20140313');
 });
 
 test('isoDateTime', function (t) {
-  var sig = createSignator();
+  var sig = createSignatory();
   var date = new Date(2014, 3 - 1, 13, 12, 5, 6);
   t.plan(1);
   t.equal(sig.isoDateTime(date), '20140313T120506Z');
