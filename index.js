@@ -29,9 +29,12 @@ function Signatory(options) {
   if (!options.algorithm) {
     throw new Error('algorithm is required.');
   }
+  this.algorithm = options.algorithm;
   var algoParts = options.algorithm.split('-');
   this.hasher = algoParts[algoParts.length - 1].toLowerCase();
-  this.algorithm = options.algorithm;
+  if (['sha256', 'sha512'].indexOf(this.hasher) < 0) {
+    throw new Error('Invalid algorithm: ' + options.algorithm);
+  }
 
   if (!options.credential) {
     throw new Error('credential is required.');
