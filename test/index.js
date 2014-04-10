@@ -219,6 +219,14 @@ test('canonicalQueryString present', function (t) {
   t.end();
 });
 
+test('getPath', function (t) {
+  var sig = createSignatory();
+  var url = 'http://foo.com/hello?foo=bar&abc=123';
+  var canonicalURI = sig.getPath(url);
+  t.equal(canonicalURI, '/hello');
+  t.end();
+});
+
 test('signedHeaders', function (t) {
   var sig = createSignatory();
   var headers = {

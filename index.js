@@ -139,7 +139,7 @@ Signatory.prototype.credentialScope = function () {
 
 Signatory.prototype.getPath = function (uri) {
   var parsed = url.parse(uri);
-  return parsed.path;
+  return parsed.pathname;
 };
 
 Signatory.prototype.canonicalQueryString = function (uri) {
